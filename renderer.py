@@ -1,8 +1,15 @@
+from enum import IntEnum
+from matplotlib.backend_bases import MouseButton
 import matplotlib.pyplot as plt
 from matplotlib.patches import Ellipse
 
 
 class Renderer:
+    class Button(IntEnum):
+        LEFT = 1
+        MIDDLE = 2
+        RIGHT = 3
+        
     def __init__(self, width=10, height=10, target_fps=10):
         """A class that abstracts the rendering engine"""
         self.WIDTH = width
@@ -21,6 +28,7 @@ class Renderer:
 
     def _setup_inputs(self):
         self._keys_pressed = []
+        self._buttons_pressed = []
         self.mouse_x = 0
         self.mouse_y = 0
         for param in plt.rcParams.find_all("keymap"):
@@ -29,6 +37,8 @@ class Renderer:
         plt.connect('key_release_event', self._key_released)
         plt.connect('motion_notify_event', self._mouse_moved)
         plt.connect('close_event', self.quit)
+        plt.connect('button_press_event', self._button_pressed)
+        plt.connect('button_release_event', self._button_released)
 
     def _key_pressed(self, event):
         self._keys_pressed.append(event.key)
@@ -41,11 +51,20 @@ class Renderer:
             self.mouse_x = event.xdata
             self.mouse_y = event.ydata
 
+    def _button_pressed(self, event):
+        self._buttons_pressed.append(event.button.value)
+
+    def _button_released(self, event):
+        self._buttons_pressed.remove(event.button.value)
+
     def quit(self, event):
         exit()
 
-    def is_pressed(self, key):
+    def is_key_pressed(self, key):
         return key in self._keys_pressed
+
+    def is_button_pressed(self, button):
+        return button in self._buttons_pressed
 
     def draw(self):
         """Renders the scene."""
