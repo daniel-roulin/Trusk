@@ -11,6 +11,7 @@ def adjust_lightness(color, amount=0.5):
         c = color
     c = colorsys.rgb_to_hls(*mc.to_rgb(c))
     return colorsys.hls_to_rgb(c[0], max(0, min(1, amount * c[1])), c[2])
+
 #region classes
 class vector3():
     def __init__(self, x, y, z):
@@ -23,7 +24,6 @@ class triangle():
         self.p = points
         self.sym = ""
         self.col = 0
-#         self.z = 0
         
 class mesh():
     def __init__(self, triangles):
@@ -81,7 +81,6 @@ fFar = 1000.0
 fFov = 80
 fAspectRatio = 1 #todo
 fFovRad = 1.0 / math.tan(fFov * 0.5 / 180.0 * 3.14159)
-print(matProj.m)
 
 matProj.m[0][0] = fAspectRatio * fFovRad
 matProj.m[1][1] = fFovRad
@@ -186,25 +185,7 @@ def update(r, fTheta):
             vecTrianglesToRaster.append(triProjected)
 
 
-    vecTrianglesToRaster.sort(key = lambda t: (t.p[0].z + t.p[1].z + t.p[2].z) / 3.0, reverse=False)
-    #### Sorter ####
-#     unsorted = []
-#     for t in vecTrianglesToRaster:
-#         t.z = ((t.p[0].z + t.p[1].z + t.p[2].z) / 3.0)
-#         unsorted.append(t)
-#     
-#     sortedTs = []
-#     bigger = 0
-# 
-#     for i in range(len(unsorted)):
-#         bigger = triangle(None)
-#         for t in unsorted:
-#             if(t.z > bigger.z):
-#                 bigger = t
-#         
-#         sortedTs.append(bigger)
-#         unsorted.remove(bigger)
-               
+    vecTrianglesToRaster.sort(key = lambda t: (t.p[0].z + t.p[1].z + t.p[2].z) / 3.0)      
     for t in vecTrianglesToRaster:
         r.filled_triangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, color = adjust_lightness("#ce70e6", (t.col+1)/2.5))
 
