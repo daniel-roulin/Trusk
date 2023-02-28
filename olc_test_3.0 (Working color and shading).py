@@ -1,10 +1,10 @@
 from renderer import Renderer
 import math
 import numpy as np
+import matplotlib.colors as mc
+import colorsys
 
 def adjust_lightness(color, amount=0.5):
-    import matplotlib.colors as mc
-    import colorsys
     try:
         c = mc.cnames[color]
     except:
@@ -23,7 +23,7 @@ class triangle():
         self.p = points
         self.sym = ""
         self.col = 0
-        self.z = 0
+#         self.z = 0
         
 class mesh():
     def __init__(self, triangles):
@@ -185,26 +185,27 @@ def update(r, fTheta):
             triProjected.col = dp
             vecTrianglesToRaster.append(triProjected)
 
-    unsorted = []
-    for t in vecTrianglesToRaster:
-        t.z = ((t.p[0].z + t.p[1].z + t.p[2].z) / 3.0)
-        unsorted.append(t)
-    
-    sortedTs = []
-    bigger = 0
 
-    for i in range(len(unsorted)):
-        bigger = triangle(None)
-        for t in unsorted:
-            if(t.z > bigger.z):
-                bigger = t
-        
-        sortedTs.append(bigger)
-        unsorted.remove(bigger)
-        
-    print("a" + str(sortedTs))
-        
-    for t in sortedTs:
+    vecTrianglesToRaster.sort(key = lambda t: (t.p[0].z + t.p[1].z + t.p[2].z) / 3.0, reverse=False)
+    #### Sorter ####
+#     unsorted = []
+#     for t in vecTrianglesToRaster:
+#         t.z = ((t.p[0].z + t.p[1].z + t.p[2].z) / 3.0)
+#         unsorted.append(t)
+#     
+#     sortedTs = []
+#     bigger = 0
+# 
+#     for i in range(len(unsorted)):
+#         bigger = triangle(None)
+#         for t in unsorted:
+#             if(t.z > bigger.z):
+#                 bigger = t
+#         
+#         sortedTs.append(bigger)
+#         unsorted.remove(bigger)
+               
+    for t in vecTrianglesToRaster:
         r.filled_triangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, color = adjust_lightness("#ce70e6", (t.col+1)/2.5))
 
 
