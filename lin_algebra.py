@@ -64,10 +64,10 @@ class Vector():
         return np.linalg.norm(self.vector)
 
     def normalize(self):
-        l = self.length()
+        l: int = self.length()
         return self/l
 
-    def dot(a, b):
+    def dot(a, b) -> float:
         return np.dot(a.vector, b.vector)
 
     def cross(a, b):
@@ -167,9 +167,33 @@ class Matrix():
     def multiply_with_matrix(self, matrix):
         return self.matrix @ matrix.matrix
 
-    def point_at(pos: Vector, target: Vector, up: Vector):
-        ...
+    def point_at(self, pos: Vector, target: Vector, up: Vector):
+        new_forward = target - pos
+        new_forward.normalize()
+
+        a = new_forward*up.dot(new_forward)
+        new_up = up - a
+        new_up.normalize()
+
+        new_right = new_up.cross(new_forward)
+
+        self.matrix[0][0] = new_right.x
+        self.matrix[0][1] = new_right.y
+        self.matrix[0][2] = new_right.z
+        self.matrix[0][3] = 0
+        self.matrix[1][0] = new_up.x
+        self.matrix[1][1] = new_up.y
+        self.matrix[1][2] = new_up.z
+        self.matrix[1][3] = 0
+        self.matrix[2][0] = new_forward.x
+        self.matrix[2][1] = new_forward.y
+        self.matrix[2][2] = new_forward.z
+        self.matrix[2][3] = 0
+        self.matrix[3][0] = pos.x
+        self.matrix[3][1] = pos.y
+        self.matrix[3][2] = pos.z
+        self.matrix[3][3] = 1
 
 
 if __name__ == "__main__":
-    print(Vector(1, 1, 1).dot(Vector(1, 1, 1)))
+    a = Vector(0, 0, 0).dot()
