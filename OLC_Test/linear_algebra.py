@@ -1,10 +1,9 @@
 from __future__ import annotations
-from collections.abc import Iterable
 import numpy as np
 
 
 class Vector3():
-    def __init__(self, x: float, y: float, z: float, w: float = 1) -> None:
+    def __init__(self, x: float, y: float, z: float, w=1) -> None:
         self.vector = np.array([x, y, z, w], dtype=float)
 
     @property
@@ -52,10 +51,22 @@ class Vector3():
         result.vector = a.vector + b.vector
         return result
 
-    def __mul__(a, b: Vector3) -> Vector3:
-        result = Vector3(0, 0, 0)
-        result.vector = a.vector*b
-        return result
+    def __mul__(a, b: Vector3 | Matrix4x4) -> Vector3:
+        if isinstance(b, Vector3):
+            result = Vector3(0, 0, 0)
+            result.vector = a.vector*b
+            return result
+        if isinstance(b, Matrix4x4):
+            result = Vector3(0, 0, 0)
+            result.vector = a.vector @ b.matrix
+
+            #TODO: Comprendre d'ou vient ce truc bizzare
+            if (result.w != 0.0):
+                result.x /= result.w
+                result.y /= result.w
+                result.z /= result.w
+
+            return result
 
     def __truediv__(a, b: Vector3) -> Vector3:
         result = Vector3(0, 0, 0)
@@ -74,27 +85,14 @@ class Vector3():
 
     def cross(a, b: Vector3) -> Vector3:
         result = Vector3(0, 0, 0)
-        result.vector = np.cross(a.vector, b.vector)
+        result.vector = np.empty(4, dtype=float)
+        result.vector[0:3] = np.cross(a.vector[:-1], b.vector[:-1])
+        result.vector[3] = 1
         return result
 
     def distance_to_plane(self, plane_p: Vector3, plane_n: Vector3) -> float:
         plane_n.normalize()
         return (plane_n.x*self.x + plane_n.y*self.y + plane_n.z*self.z - Vector3.dot(plane_n, plane_p))
-
-
-class Triangle():
-    def __init__(self, points: Iterable[Vector3]) -> None:
-        self.p = np.array(points, dtype=Vector3)
-        self.sym = ""
-        self.col = 0
-
-
-class Mesh():
-    def __init__(self, triangles: Iterable[Triangle]) -> None:
-        self.triangles = np.array(triangles, dtype=Triangle)
-
-    def load_from_file(path: str) -> None:
-        ...
 
 
 class Matrix4x4():
@@ -116,11 +114,8 @@ class Matrix4x4():
         self.matrix[2][2] = 1
         self.matrix[3][3] = 1
 
-    def __mul__(a, b: Matrix4x4 | Vector3) -> Matrix4x4 | Vector3:
-        if isinstance(b, Matrix4x4):
-            return a.matrix @ b.matrix
-        if isinstance(b, Vector3):
-            return a.matrix @ b.vector
+    def __mul__(a, b: Matrix4x4) -> Matrix4x4:
+        return a.matrix @ b.matrix
 
     def inverse(self) -> None:
         try:
@@ -179,7 +174,7 @@ class Matrix4x4():
             fov : Fov must be in degrees
         """
 
-        fov_rad = 1/np.tan(np.deg2rad(fov/2))
+        fov_rad = 1/np.tan(fov*0.5/180.0*np.pi)
         self.matrix[0][0] = aspect_ratio*fov_rad
         self.matrix[1][1] = fov_rad
         self.matrix[2][2] = far/(far-near)
@@ -215,83 +210,27 @@ class Matrix4x4():
         self.matrix[3][3] = 1
 
 
-#TODO: move in other file
-def line_plane_intersection(plane_p: Vector3, plane_n: Vector3, line_start: Vector3, line_end: Vector3) -> tuple[Vector3, float]:
-    """
-    Returns the point of intersection between a plane and a line.
-    """
-    plane_n.normalize()
-    plane_d = -Vector3.dot(plane_n, plane_p)
-    ad = Vector3.dot(line_start, plane_n)
-    bd = Vector3.dot(line_end, plane_n)
-    t = (-plane_d - ad)/(bd-ad)
-    line_vec = line_end - line_start
-    line_to_intersect = line_vec*t
-    return line_start + line_to_intersect
+def multiplyMatrixVector(i, m):
+    result = Vector3(0, 0, 0)
+    result.x = i.x*m.matrix[0][0] + i.y*m.matrix[1][0] + i.z*m.matrix[2][0] + m.matrix[3][0]
+    result.y = i.x*m.matrix[0][1] + i.y*m.matrix[1][1] + i.z*m.matrix[2][1] + m.matrix[3][1]
+    result.z = i.x*m.matrix[0][2] + i.y*m.matrix[1][2] + i.z*m.matrix[2][2] + m.matrix[3][2]
+
+    w = i.x*m.matrix[0][3] + i.y*m.matrix[1][3] + i.z*m.matrix[2][3] + m.matrix[3][3]
+
+    if (w != 0.0):
+        result.x /= w
+        result.y /= w
+        result.z /= w
+
+    return result
 
 
-def clip_against_plane(plane_p: Vector3, plane_n: Vector3, triangle: Triangle) -> tuple[int, Triangle | None, Triangle | None]:
-    """
-    Clip the triangle against the plane and returns the number of valid triangles inside.
-    Also returns one or two triangles that are guaranteed to be inside.
-    """
-    plane_n.normalize()
+if __name__ == "__main__":
+    a = Matrix4x4()
+    a.projection(80, 1, 0.1, 1000)
 
-    inside_points = np.empty(3, dtype=Vector3)
-    outside_points = np.empty(3, dtype=Vector3)
-    n_inside_points = 0
-    n_outside_points = 0
+    b = Vector3(0.49757104789172696, 0.7506020846263005, -29.565236198776184, 1.0)
 
-    d0 = triangle.p[0].distance_to_plane(plane_p, plane_n)
-    d1 = triangle.p[1].distance_to_plane(plane_p, plane_n)
-    d2 = triangle.p[2].distance_to_plane(plane_p, plane_n)
-
-    if (d0 >= 0):
-        inside_points[n_inside_points] = triangle.p[0]
-        n_inside_points += 1
-    else:
-        outside_points[n_outside_points] = triangle.p[0]
-        n_inside_points += 1
-    if (d1 >= 0):
-        inside_points[n_inside_points] = triangle.p[1]
-        n_inside_points += 1
-    else:
-        outside_points[n_outside_points] = triangle.p[1]
-        n_inside_points += 1
-    if (d2 >= 0):
-        inside_points[n_inside_points] = triangle.p[2]
-        n_inside_points += 1
-    else:
-        outside_points[n_outside_points] = triangle.p[2]
-        n_inside_points += 1
-
-    if (n_inside_points == 0):
-        # Completely clipped
-        return 0, None, None
-
-    if n_inside_points == 3:
-        # Not clipped at all
-        return 1, triangle, None
-
-    if (n_inside_points == 1 and n_outside_points == 2):
-        # Two points on the outside => We just make the triangle smaller
-        new_triangle = triangle
-        new_triangle.p[0] = inside_points[0]
-        new_triangle.p[1] = line_plane_intersection(plane_p, plane_n, inside_points[0], outside_points[0])
-        new_triangle.p[2] = line_plane_intersection(plane_p, plane_n, inside_points[0], outside_points[1])
-
-        return 1, new_triangle, None
-
-    if (n_inside_points == 2 and n_outside_points == 1):
-        # Two points inside, we have a quad that we need to triangulate
-        new_triangle1 = triangle
-        new_triangle1.p[0] = inside_points[0]
-        new_triangle1.p[1] = inside_points[1]
-        new_triangle1.p[2] = line_plane_intersection(plane_p, plane_n, inside_points[0], outside_points[0])
-
-        new_triangle2 = triangle
-        new_triangle1.p[0] = inside_points[1]
-        new_triangle1.p[1] = new_triangle1.p[2]
-        new_triangle1.p[2] = line_plane_intersection(plane_p, plane_n, inside_points[1], outside_points[0])
-
-        return 2, new_triangle1, new_triangle2
+    print(multiplyMatrixVector(b, a))
+    print(b*a)
