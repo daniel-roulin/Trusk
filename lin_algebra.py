@@ -38,7 +38,7 @@ class Vector3():
         self.vector[3] = value
 
     def __str__(self):
-        return f"Vector({self.x}, {self.y}, {self.z}, {self.w})"
+        return f"Vector3({self.x}, {self.y}, {self.z}, {self.w})"
 
     def __sub__(a, b):
         result = Vector3(0, 0, 0)
@@ -75,17 +75,39 @@ class Vector3():
         result.vector = np.cross(a.vector, b.vector)
         return result
 
+    def distance_to_plane():
+        # TODO
+        ...
+
 
 class Triangle():
     def __init__(self, points):
-        self.p = np.array([points])
+        self.p = np.array(points)
         self.sym = ""
         self.col = 0
+
+    def _intersect_plane(plane_p: Vector3, plane_n: Vector3, line_start: Vector3, line_end: Vector3):
+        plane_n.normalize()
+        plane_d = -Vector3.dot(plane_n, plane_p)
+        ad = Vector3.dot(line_start, plane_n)
+        bd = Vector3.dot(line_end, plane_n)
+        t = (-plane_d - ad)/(bd-ad)
+        line_vec = line_end - line_start
+        line_to_intersect = line_vec*t
+        return line_start + line_to_intersect, t
+
+    def clip_against_plane(self, plane_p: Vector3, plane_n: Vector3):
+        """
+        Clip this triangle against the plane define by a point and a vector.
+        Returns an array of triangles inside the plane.
+        This array can have a length of 0, 1 or 2 depending on the situation.
+        """
+        plane_n.normalize()
 
 
 class Mesh():
     def __init__(self, triangles):
-        self.triangles = np.array([triangles])
+        self.triangles = np.array(triangles)
 
     def load_from_file(path):
         ...
@@ -95,9 +117,14 @@ class Matrix4x4():
     def __init__(self):
         self.matrix = np.zeros((4, 4))
 
-    # TODO: Operator overloading ?
-    def multiply_with_vector(self, vector):
-        return self.matrix @ vector.vector
+    def __str__(self):
+        return "Matrix4x4:\n " + str(self.matrix)[1:-1]
+
+    def __getitem__(self, key):
+        return self.matrix[key]
+
+    def __setitem__(self, key, value):
+        self.matrix[key] = value
 
     def identity(self):
         self.matrix[0][0] = 1
@@ -171,11 +198,11 @@ class Matrix4x4():
         new_forward = target - pos
         new_forward.normalize()
 
-        a = new_forward*up.dot(new_forward)
+        a = new_forward*Vector3.dot(up, new_forward)
         new_up = up - a
         new_up.normalize()
 
-        new_right = new_up.cross(new_forward)
+        new_right = Vector3.cross(new_up, new_forward)
 
         self.matrix[0][0] = new_right.x
         self.matrix[0][1] = new_right.y
@@ -193,6 +220,18 @@ class Matrix4x4():
         self.matrix[3][1] = pos.y
         self.matrix[3][2] = pos.z
         self.matrix[3][3] = 1
+
+    def __mul__(a, b):
+        if isinstance(b, Matrix):
+            return a.matrix @ b.matrix
+        if isinstance(b, Vector3):
+            return a.matrix @ b.vector
+
+    def inverse(self):
+        try:
+            self.matrix = np.linalg.inv(self.matrix)
+        except np.linalg.LinAlgError as e:
+            raise ValueError("This matrix has no inverse!")
 
 
 if __name__ == "__main__":
