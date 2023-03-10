@@ -222,7 +222,7 @@ class Matrix4x4():
         self.matrix[3][3] = 1
 
     def __mul__(a, b):
-        if isinstance(b, Matrix):
+        if isinstance(b, Matrix4x4):
             return a.matrix @ b.matrix
         if isinstance(b, Vector3):
             return a.matrix @ b.vector
