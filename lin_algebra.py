@@ -1,7 +1,7 @@
 import numpy as np
 
 
-class Vector():
+class Vector3():
     def __init__(self, x, y, z, w=1):
         self.vector = np.array([x, y, z, w])
 
@@ -41,22 +41,22 @@ class Vector():
         return f"Vector({self.x}, {self.y}, {self.z}, {self.w})"
 
     def __sub__(a, b):
-        result = Vector(0, 0, 0)
+        result = Vector3(0, 0, 0)
         result.vector = a.vector - b.vector
         return result
 
     def __add__(a, b):
-        result = Vector(0, 0, 0)
+        result = Vector3(0, 0, 0)
         result.vector = a.vector + b.vector
         return result
 
     def __mul__(a, b):
-        result = Vector(0, 0, 0)
+        result = Vector3(0, 0, 0)
         result.vector = a.vector*b
         return result
 
     def __truediv__(a, b):
-        result = Vector(0, 0, 0)
+        result = Vector3(0, 0, 0)
         result.vector = a.vector/b
         return result
 
@@ -71,7 +71,7 @@ class Vector():
         return np.dot(a.vector, b.vector)
 
     def cross(a, b):
-        result = Vector(0, 0, 0)
+        result = Vector3(0, 0, 0)
         result.vector = np.cross(a.vector, b.vector)
         return result
 
@@ -91,7 +91,7 @@ class Mesh():
         ...
 
 
-class Matrix():
+class Matrix4x4():
     def __init__(self):
         self.matrix = np.zeros((4, 4))
 
@@ -167,7 +167,7 @@ class Matrix():
     def multiply_with_matrix(self, matrix):
         return self.matrix @ matrix.matrix
 
-    def point_at(self, pos: Vector, target: Vector, up: Vector):
+    def point_at(self, pos: Vector3, target: Vector3, up: Vector3):
         new_forward = target - pos
         new_forward.normalize()
 
@@ -196,4 +196,4 @@ class Matrix():
 
 
 if __name__ == "__main__":
-    a = Vector(0, 0, 0).dot()
+    a = Vector3(0, 0, 0).dot()
