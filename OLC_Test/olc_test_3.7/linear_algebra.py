@@ -42,34 +42,34 @@ class Vector3():
         return f"Vector3({self.x}, {self.y}, {self.z}, {self.w})"
 
     def __sub__(a, b: Vector3) -> Vector3:
-        result = Vector3(0, 0, 0)
+        result = Vector3()
         result.vector[0:3] = a.vector[0:3] - b.vector[0:3]
         return result
 
     def __add__(a, b: Vector3) -> Vector3:
-        result = Vector3(0, 0, 0)
+        result = Vector3()
         result.vector[0:3] = a.vector[0:3] + b.vector[0:3]
         return result
 
     def __mul__(a, b: float | Matrix4x4) -> Vector3:
         if isinstance(b, float | int):
-            result = Vector3(0, 0, 0)
-            result.multiply_with_number(b)
+            result = Vector3()
+            result.vector[0:3] = a.vector[0:3]*b
             return result
         if isinstance(b, Matrix4x4):
-            result = Vector3(0, 0, 0)
-            result.multiply_with_matrix(b)
+            result = Vector3()
+            result.vector = a.vector @ b.matrix
             return result
 
     def multiply_with_matrix(self, matrix: Matrix4x4):
-        # Only case where we use k
+        # Only case where we use w
         self.vector = self.vector @ matrix.matrix
 
     def multiply_with_number(self, number: float):
         self.vector[0:3] = self.vector[0:3]*number
 
     def __truediv__(a, b: Vector3) -> Vector3:
-        result = Vector3(0, 0, 0)
+        result = Vector3()
         result.vector[0:3] = a.vector[0:3]/b
         return result
 
@@ -84,7 +84,7 @@ class Vector3():
         return np.dot(a.vector[0:3], b.vector[0:3])
 
     def cross(a, b: Vector3) -> Vector3:
-        result = Vector3(0, 0, 0)
+        result = Vector3()
         result.vector[0:3] = np.cross(a.vector[0:3], b.vector[0:3])
         return result
 
@@ -224,7 +224,7 @@ class Matrix4x4():
 
 
 def multiplyMatrixVector(i, m):
-    result = Vector3(0, 0, 0)
+    result = Vector3()
     result.x = i.x*m.matrix[0][0] + i.y*m.matrix[1][0] + i.z*m.matrix[2][0] + m.matrix[3][0]
     result.y = i.x*m.matrix[0][1] + i.y*m.matrix[1][1] + i.z*m.matrix[2][1] + m.matrix[3][1]
     result.z = i.x*m.matrix[0][2] + i.y*m.matrix[1][2] + i.z*m.matrix[2][2] + m.matrix[3][2]
@@ -248,5 +248,6 @@ if __name__ == "__main__":
     # print(multiplyMatrixVector(b, a))
     # print(b*a)
     a = Vector3(1, 0, 0)
-    b = Vector3(0, 1, 0)
-    print(a.cross(b))
+    # b = Matrix4x4.identity()
+    print(a*2)
+    print(a)

@@ -4,6 +4,7 @@ from collections.abc import Iterable
 import numpy as np
 import matplotlib.colors as mc
 import colorsys
+import cProfile
 
 #TODO: default value 0,0,0 for Vector3
 
@@ -141,21 +142,21 @@ def adjust_lightness(color, amount=0.5):
 #endregion
 
 mesh = Mesh()
-mesh.load_from_file("resources/t_34_obj.obj")
-# mesh.triangles = [
-#     Triangle([Vector3(0, 0, 0), Vector3(0, 1, 0), Vector3(1, 1, 0)]),
-#     Triangle([Vector3(0, 0, 0), Vector3(1, 1, 0), Vector3(1, 0, 0)]),
-#     Triangle([Vector3(1, 0, 0), Vector3(1, 1, 0), Vector3(1, 1, 1)]),
-#     Triangle([Vector3(1, 0, 0), Vector3(1, 1, 1), Vector3(1, 0, 1)]),
-#     Triangle([Vector3(1, 0, 1), Vector3(1, 1, 1), Vector3(0, 1, 1)]),
-#     Triangle([Vector3(1, 0, 1), Vector3(0, 1, 1), Vector3(0, 0, 1)]),
-#     Triangle([Vector3(0, 0, 1), Vector3(0, 1, 1), Vector3(0, 1, 0)]),
-#     Triangle([Vector3(0, 0, 1), Vector3(0, 1, 0), Vector3(0, 0, 0)]),
-#     Triangle([Vector3(0, 1, 0), Vector3(0, 1, 1), Vector3(1, 1, 1)]),
-#     Triangle([Vector3(0, 1, 0), Vector3(1, 1, 1), Vector3(1, 1, 0)]),
-#     Triangle([Vector3(1, 0, 1), Vector3(0, 0, 1), Vector3(0, 0, 0)]),
-#     Triangle([Vector3(1, 0, 1), Vector3(0, 0, 0), Vector3(1, 0, 0)])
-# ]
+# mesh.load_from_file("resources/t_34_obj.obj")
+mesh.triangles = [
+    Triangle([Vector3(0, 0, 0), Vector3(0, 1, 0), Vector3(1, 1, 0)]),
+    Triangle([Vector3(0, 0, 0), Vector3(1, 1, 0), Vector3(1, 0, 0)]),
+    Triangle([Vector3(1, 0, 0), Vector3(1, 1, 0), Vector3(1, 1, 1)]),
+    Triangle([Vector3(1, 0, 0), Vector3(1, 1, 1), Vector3(1, 0, 1)]),
+    Triangle([Vector3(1, 0, 1), Vector3(1, 1, 1), Vector3(0, 1, 1)]),
+    Triangle([Vector3(1, 0, 1), Vector3(0, 1, 1), Vector3(0, 0, 1)]),
+    Triangle([Vector3(0, 0, 1), Vector3(0, 1, 1), Vector3(0, 1, 0)]),
+    Triangle([Vector3(0, 0, 1), Vector3(0, 1, 0), Vector3(0, 0, 0)]),
+    Triangle([Vector3(0, 1, 0), Vector3(0, 1, 1), Vector3(1, 1, 1)]),
+    Triangle([Vector3(0, 1, 0), Vector3(1, 1, 1), Vector3(1, 1, 0)]),
+    Triangle([Vector3(1, 0, 1), Vector3(0, 0, 1), Vector3(0, 0, 0)]),
+    Triangle([Vector3(1, 0, 1), Vector3(0, 0, 0), Vector3(1, 0, 0)])
+]
 
 vCamera = Vector3(0, 0, 0)
 
@@ -166,6 +167,7 @@ matProj = Matrix4x4()
 matProj.projection(80, 1, 0.1, 1000)
 
 
+# @timing
 def update(r, theta):
     matRotZ = Matrix4x4()
     matRotZ.rotationZ(theta)
@@ -174,10 +176,10 @@ def update(r, theta):
     matRotX.rotationX(theta/2)
 
     vecTrianglesToRaster = []
-    for tri in mesh.triangles:
+    for triangle in mesh.triangles:
         triRotatedZ = Triangle()
         for i in range(3):
-            triRotatedZ.p[i] = tri.p[i]*matRotZ
+            triRotatedZ.p[i] = triangle.p[i]*matRotZ
 
         triRotatedZX = Triangle()
         for i in range(3):
@@ -190,12 +192,14 @@ def update(r, theta):
 
         line1 = triTranslated.p[1] - triTranslated.p[0]
         line2 = triTranslated.p[2] - triTranslated.p[0]
+
         normal = Vector3.cross(line1, line2)
         normal.normalize()
 
         camera_ray = triTranslated.p[0] - vCamera
         if (Vector3.dot(normal, camera_ray) < 0.0):
             #FIXME: This is broken
+            # TODO: light direction calc does not need to be in loop
             light_direction = Vector3(0, 0, -1)
             light_direction.normalize()
             dp = Vector3.dot(light_direction, normal)
@@ -203,6 +207,7 @@ def update(r, theta):
             triProjected = Triangle()
             for i in range(3):
                 triProjected.p[i] = triTranslated.p[i]*matProj
+                triProjected.p[i] /= triProjected.p[i].w
 
             triProjected.p[0].x += 1.0
             triProjected.p[0].y += 1.0
@@ -225,22 +230,6 @@ def update(r, theta):
         r.filled_triangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, color=adjust_lightness("#ffa75e", (t.col + 1)/2.5))
 
 
-def multiplyMatrixVector(i, m):
-    result = Vector3(0, 0, 0)
-    result.x = i.x*m.matrix[0][0] + i.y*m.matrix[1][0] + i.z*m.matrix[2][0] + m.matrix[3][0]
-    result.y = i.x*m.matrix[0][1] + i.y*m.matrix[1][1] + i.z*m.matrix[2][1] + m.matrix[3][1]
-    result.z = i.x*m.matrix[0][2] + i.y*m.matrix[1][2] + i.z*m.matrix[2][2] + m.matrix[3][2]
-
-    w = i.x*m.matrix[0][3] + i.y*m.matrix[1][3] + i.z*m.matrix[2][3] + m.matrix[3][3]
-
-    if (w != 0.0):
-        result.x /= w
-        result.y /= w
-        result.z /= w
-
-    return result
-
-
 def main():
     r = Renderer(width=200, height=200, target_fps=60)
     angle = 1
@@ -248,6 +237,8 @@ def main():
         angle += 0.05
         update(r, angle)
         r.draw()
+        # exit()
 
 
 main()
+# cProfile.run("main()", sort="time")

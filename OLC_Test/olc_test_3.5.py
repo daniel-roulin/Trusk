@@ -1,6 +1,19 @@
 from renderer import Renderer
 import math
 import numpy as np
+import time
+
+
+def timing(f):
+    def wrap(*args, **kwargs):
+        time1 = time.time()
+        ret = f(*args, **kwargs)
+        time2 = time.time()
+        print('{:s} function took {:.3f} ms'.format(f.__name__, (time2-time1)*1000.0))
+
+        return ret
+
+    return wrap
 
 
 def adjust_lightness(color, amount=0.5):
@@ -58,9 +71,7 @@ def get_object_from_file(filename):
                 vertex.append(vertex__)
             elif line.startswith('f'):
                 faces_ = line.split()[1:]
-                print(faces_)
                 faces.append([int(face_.split('/')[0]) - 1 for face_ in faces_])
-    print(faces)
 
     triangles = []
     for tri in faces:
@@ -127,6 +138,7 @@ matProj.m[2][3] = 1.0
 matProj.m[3][3] = 0.0
 
 
+@timing
 def update(r, fTheta):
     matRotZ = matrix4x4()
     matRotX = matrix4x4()
