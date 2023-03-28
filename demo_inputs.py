@@ -23,7 +23,6 @@ def main():
         r.filled_triangle(x - 5, y - 5, x + 5, y - 5, x, y + 5, color="orange")
         r.filled_triangle(r.mouse_x - 5, r.mouse_y - 5, r.mouse_x + 5, r.mouse_y - 5, r.mouse_x, r.mouse_y + 5, color="blue")
         r.draw()
-        
-        
+
 if __name__ == "__main__":
     main()

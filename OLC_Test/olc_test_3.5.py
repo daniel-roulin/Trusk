@@ -1,6 +1,19 @@
 from renderer import Renderer
 import math
 import numpy as np
+import time
+
+
+def timing(f):
+    def wrap(*args, **kwargs):
+        time1 = time.time()
+        ret = f(*args, **kwargs)
+        time2 = time.time()
+        print('{:s} function took {:.3f} ms'.format(f.__name__, (time2-time1)*1000.0))
+
+        return ret
+
+    return wrap
 
 
 def adjust_lightness(color, amount=0.5):
@@ -14,12 +27,14 @@ def adjust_lightness(color, amount=0.5):
     return colorsys.hls_to_rgb(c[0], max(0, min(1, amount*c[1])), c[2])
 
 
-# region classes
 class vector3():
     def __init__(self, x, y, z):
         self.x = x
         self.y = y
         self.z = z
+
+    def __str__(self) -> str:
+        return f"Vector3({self.x}, {self.y}, {self.z})"
 
 
 class triangle():
@@ -28,6 +43,9 @@ class triangle():
         self.sym = ""
         self.col = 0
         self.z = 0
+
+    def __str__(self) -> str:
+        return f"Triangle({self.p[0]}, {self.p[1]}, {self.p[2]})"
 
 
 class mesh():
@@ -39,8 +57,31 @@ class matrix4x4():
     def __init__(self):
         self.m = [[0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0], [0, 0, 0, 0]]
 
+    def __str__(self) -> str:
+        return "Matrix4x4:\n " + str(self.m)[1:-1]
 
-# endregion
+
+def get_object_from_file(filename):
+    vertex, faces = [], []
+    with open(filename) as f:
+        for line in f:
+            if line.startswith('v '):
+                vertex_ = [float(i) for i in line.split()[1:]]
+                vertex__ = vector3(vertex_[0], vertex_[1], vertex_[2])
+                vertex.append(vertex__)
+            elif line.startswith('f'):
+                faces_ = line.split()[1:]
+                faces.append([int(face_.split('/')[0]) - 1 for face_ in faces_])
+
+    triangles = []
+    for tri in faces:
+        triangle_ = triangle([vertex[tri[0]], vertex[tri[1]], vertex[tri[2]]])
+        triangles.append(triangle_)
+        if len(tri) > 3:
+            triangle_ = triangle([vertex[tri[0]], vertex[tri[2]], vertex[tri[3]]])
+            triangles.append(triangle_)
+
+    return mesh(triangles)
 
 
 def multiplyMatrixVector(i, m):
@@ -59,32 +100,34 @@ def multiplyMatrixVector(i, m):
     return result
 
 
-meshCube = mesh(None)
+meshCube = get_object_from_file('resources/t_34_obj.obj')
 matProj = matrix4x4()
 
 vCamera = vector3(0, 0, 0)
 
 fTheta = 0
 
-meshCube.triangles = [
-    triangle([vector3(0, 0, 0), vector3(0, 1, 0), vector3(1, 1, 0)]),
-    triangle([vector3(0, 0, 0), vector3(1, 1, 0), vector3(1, 0, 0)]),
-    triangle([vector3(1, 0, 0), vector3(1, 1, 0), vector3(1, 1, 1)]),
-    triangle([vector3(1, 0, 0), vector3(1, 1, 1), vector3(1, 0, 1)]),
-    triangle([vector3(1, 0, 1), vector3(1, 1, 1), vector3(0, 1, 1)]),
-    triangle([vector3(1, 0, 1), vector3(0, 1, 1), vector3(0, 0, 1)]),
-    triangle([vector3(0, 0, 1), vector3(0, 1, 1), vector3(0, 1, 0)]),
-    triangle([vector3(0, 0, 1), vector3(0, 1, 0), vector3(0, 0, 0)]),
-    triangle([vector3(0, 1, 0), vector3(0, 1, 1), vector3(1, 1, 1)]),
-    triangle([vector3(0, 1, 0), vector3(1, 1, 1), vector3(1, 1, 0)]),
-    triangle([vector3(1, 0, 1), vector3(0, 0, 1), vector3(0, 0, 0)]),
-    triangle([vector3(1, 0, 1), vector3(0, 0, 0), vector3(1, 0, 0)])
-]
+# meshCube = mesh(
+#     [
+#         triangle([vector3(0, 0, 0), vector3(0, 1, 0), vector3(1, 1, 0)]),
+#         triangle([vector3(0, 0, 0), vector3(1, 1, 0), vector3(1, 0, 0)]),
+#         triangle([vector3(1, 0, 0), vector3(1, 1, 0), vector3(1, 1, 1)]),
+#         triangle([vector3(1, 0, 0), vector3(1, 1, 1), vector3(1, 0, 1)]),
+#         triangle([vector3(1, 0, 1), vector3(1, 1, 1), vector3(0, 1, 1)]),
+#         triangle([vector3(1, 0, 1), vector3(0, 1, 1), vector3(0, 0, 1)]),
+#         triangle([vector3(0, 0, 1), vector3(0, 1, 1), vector3(0, 1, 0)]),
+#         triangle([vector3(0, 0, 1), vector3(0, 1, 0), vector3(0, 0, 0)]),
+#         triangle([vector3(0, 1, 0), vector3(0, 1, 1), vector3(1, 1, 1)]),
+#         triangle([vector3(0, 1, 0), vector3(1, 1, 1), vector3(1, 1, 0)]),
+#         triangle([vector3(1, 0, 1), vector3(0, 0, 1), vector3(0, 0, 0)]),
+#         triangle([vector3(1, 0, 1), vector3(0, 0, 0), vector3(1, 0, 0)])
+#     ]
+# )
 
 fNear = 0.1
 fFar = 1000.0
 fFov = 80
-fAspectRatio = 1  # todo
+fAspectRatio = 1  #todo
 fFovRad = 1.0/math.tan(fFov*0.5/180.0*3.14159)
 
 matProj.m[0][0] = fAspectRatio*fFovRad
@@ -95,6 +138,7 @@ matProj.m[2][3] = 1.0
 matProj.m[3][3] = 0.0
 
 
+@timing
 def update(r, fTheta):
     matRotZ = matrix4x4()
     matRotX = matrix4x4()
@@ -131,9 +175,9 @@ def update(r, fTheta):
         triRotatedZX.p[2] = multiplyMatrixVector(triRotatedZ.p[2], matRotX)
 
         triTranslated = triRotatedZX
-        triTranslated.p[0].z = triRotatedZX.p[0].z + 3.0
-        triTranslated.p[1].z = triRotatedZX.p[1].z + 3.0
-        triTranslated.p[2].z = triRotatedZX.p[2].z + 3.0
+        triTranslated.p[0].z = triRotatedZX.p[0].z + -30.0
+        triTranslated.p[1].z = triRotatedZX.p[1].z + -30.0
+        triTranslated.p[2].z = triRotatedZX.p[2].z + -30.0
 
         normal = vector3(0, 0, 0)
         line1 = vector3(0, 0, 0)
@@ -156,10 +200,7 @@ def update(r, fTheta):
         normal.y /= l
         normal.z /= l
 
-        if (normal.x*(triTranslated.p[0].x - vCamera.x) +
-            normal.y*(triTranslated.p[0].y - vCamera.y) +
-            normal.z*(triTranslated.p[0].z - vCamera.z) < 0.0): # yapf: disable
-
+        if (normal.x*(triTranslated.p[0].x - vCamera.x) + normal.y*(triTranslated.p[0].y - vCamera.y) + normal.z*(triTranslated.p[0].z - vCamera.z) < 0.0):
             light_direction = vector3(0, 0, -1)
             l = math.sqrt((light_direction.x*light_direction.x + light_direction.y*light_direction.y + light_direction.z*light_direction.z))
             light_direction.x /= l
@@ -189,25 +230,8 @@ def update(r, fTheta):
             triProjected.col = dp
             vecTrianglesToRaster.append(triProjected)
 
-    unsorted = []
     for t in vecTrianglesToRaster:
-        t.z = ((t.p[0].z + t.p[1].z + t.p[2].z)/3.0)
-        unsorted.append(t)
-
-    sortedTs = []
-    bigger = 0
-
-    for i in range(len(unsorted)):
-        bigger = triangle(None)
-        for t in unsorted:
-            if (t.z > bigger.z):
-                bigger = t
-
-        sortedTs.append(bigger)
-        unsorted.remove(bigger)
-
-    for t in sortedTs:
-        r.filled_triangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, color=adjust_lightness("#ce70e6", (t.col + 1)/2.5))
+        r.filled_triangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, color=adjust_lightness("#ffa75e", (t.col + 1)/2.5))
 
 
 def main():
@@ -219,5 +243,4 @@ def main():
         r.draw()
 
 
-if __name__ == "__main__":
-    main()
+main()
