@@ -58,6 +58,7 @@ class Mesh():
 class Engine3D():
     def __init__(self) -> None:
         self.mesh = Mesh.load_from_file("cat.obj")
+        self.mesh = Mesh.load_from_file("t_34_obj.obj")
         # self.mesh = Mesh(
         #     [
         #         Triangle([Vector3(), Vector3(0, 1, 0), Vector3(1, 1, 0)]),
@@ -87,7 +88,7 @@ class Engine3D():
         # TODO: Fix aspect ratio
         self.mProj = Matrix4x4.projection(80, 1, 0.1, 1000)
 
-    def update(self, r: Renderer):
+    def update(self, r: Renderer, theta):
         # TODO: Add elapsed time
         # if r.is_key_pressed("up"):
         #     self.vcamera.y += 0.08
@@ -117,9 +118,13 @@ class Engine3D():
         # Skipped world transform here
 
         vup = Vector3(0, 1, 0)
-        vtarget = Vector3(0, 0, 1)
+        # vtarget = Vector3(0, 0, 1)
         # mcamera_rotation = Matrix4x4.rotationY(self.fyaw)
         # self.vlookdir = vtarget*mcamera_rotation
+
+        self.vcamera = Vector3(np.cos(theta)*4, 2, np.sin(theta)*4)
+        self.vlookdir = self.vcamera + Vector3(0, -3, 0)
+
         vtarget = self.vcamera + self.vlookdir
         self.mview = Matrix4x4.point_at(self.vcamera, vtarget, vup)
         self.mview.inverse()
@@ -260,10 +265,14 @@ def main():
     renderer = Renderer(width=200, height=200, target_fps=60)
     engine3d = Engine3D()
 
+    theta = 0
+
     while True:
-        engine3d.update(renderer)
+        engine3d.update(renderer, theta)
         renderer.draw()
         # exit()
+
+        theta += 0.1
 
 
 main()
