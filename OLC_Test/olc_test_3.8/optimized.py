@@ -5,6 +5,27 @@ import colorsys
 import cProfile
 from matrix import Matrix4x4
 
+from functools import wraps
+import time
+def timeit(func):
+    @wraps(func)
+    def timeit_wrapper(*args, **kwargs):
+        ts = np.empty(10)
+        for i in range(10):
+            start_time = time.perf_counter()
+            result = func(*args, **kwargs)
+            end_time = time.perf_counter()
+            total_time = end_time - start_time
+            ts[i] = total_time
+            print(f'{i + 1}: Function {func.__name__} took {total_time:.4f} seconds')
+        
+        average = np.average(ts)
+        print()
+        print(f'Function {func.__name__} took on average {average:.4f} seconds')
+        return result
+    return timeit_wrapper
+
+
 
 class Mesh():
     def __init__(self, triangles) -> None:
@@ -64,6 +85,7 @@ class Engine3D():
 
         self.projection_matrix = Matrix4x4.projection(80, aspect_ratio, 0.1, 1000)
 
+    @timeit
     def update(self, r: Renderer, theta):
         # TODO: Add elapsed time
         # if r.is_key_pressed("up"):
@@ -246,7 +268,6 @@ def main():
         renderer.draw()
 
         theta += 0.1
-
 
 main()
 # cProfile.run("main()", sort="time")
