@@ -163,17 +163,14 @@ vCamera = Vector3(0, 0, 0)
 fTheta = 0
 
 # TODO: Fix aspect ratio
-matProj = Matrix4x4()
-matProj.projection(80, 1, 0.1, 1000)
+matProj = Matrix4x4.projection(80, 1, 0.1, 1000)
 
 
 # @timing
 def update(r, theta):
-    matRotZ = Matrix4x4()
-    matRotZ.rotationZ(theta)
+    matRotZ = Matrix4x4.rotationZ(theta)
 
-    matRotX = Matrix4x4()
-    matRotX.rotationX(theta/2)
+    matRotX = Matrix4x4.rotationX(theta/2)
 
     vecTrianglesToRaster = []
     for triangle in mesh.triangles:
