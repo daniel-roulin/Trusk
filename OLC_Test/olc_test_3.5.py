@@ -3,17 +3,25 @@ import math
 import numpy as np
 import time
 
-
-def timing(f):
-    def wrap(*args, **kwargs):
-        time1 = time.time()
-        ret = f(*args, **kwargs)
-        time2 = time.time()
-        print('{:s} function took {:.3f} ms'.format(f.__name__, (time2-time1)*1000.0))
-
-        return ret
-
-    return wrap
+from functools import wraps
+import time
+def timeit(func):
+    @wraps(func)
+    def timeit_wrapper(*args, **kwargs):
+        ts = np.empty(10)
+        for i in range(10):
+            start_time = time.perf_counter()
+            result = func(*args, **kwargs)
+            end_time = time.perf_counter()
+            total_time = end_time - start_time
+            ts[i] = total_time
+            print(f'{i + 1}: Function {func.__name__} took {total_time:.4f} seconds')
+        
+        average = np.average(ts)
+        print()
+        print(f'Function {func.__name__} took on average {average:.4f} seconds')
+        return result
+    return timeit_wrapper
 
 
 def adjust_lightness(color, amount=0.5):
@@ -138,7 +146,7 @@ matProj.m[2][3] = 1.0
 matProj.m[3][3] = 0.0
 
 
-@timing
+@timeit
 def update(r, fTheta):
     matRotZ = matrix4x4()
     matRotX = matrix4x4()

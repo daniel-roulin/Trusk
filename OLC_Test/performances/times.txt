@@ -1,0 +1,4 @@
+olc_test_3.4.py - First succes at loading a model - average 1.3445 seconds
+olc_test_3.5.py - Improved model viewing - average 1.3387 seconds
+olc_test_3.7 - First attempt at optimization - average 1.6045 seconds
+olc_test_3.8 - Vecotrized computations using numpy - average 1.1472 seconds
