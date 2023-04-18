@@ -6,10 +6,30 @@ import matplotlib.colors as mc
 import colorsys
 import cProfile
 
+from functools import wraps
+import time
+def timeit(func):
+    @wraps(func)
+    def timeit_wrapper(*args, **kwargs):
+        ts = np.empty(10)
+        for i in range(10):
+            start_time = time.perf_counter()
+            result = func(*args, **kwargs)
+            end_time = time.perf_counter()
+            total_time = end_time - start_time
+            ts[i] = total_time
+            print(f'{i + 1}: Function {func.__name__} took {total_time:.4f} seconds')
+        
+        average = np.average(ts)
+        print()
+        print(f'Function {func.__name__} took on average {average:.4f} seconds')
+        return result
+    return timeit_wrapper
+
 
 #TODO: * operator overloading
 class Triangle():
-    def __init__(self, points: Iterable[Vector3] = [Vector3(), Vector3(), Vector3()]) -> None:
+    def __init__(self, points = [Vector3(), Vector3(), Vector3()]) -> None:
         self.p = np.array(points, dtype=Vector3)
         self.col = 0
 
@@ -57,7 +77,7 @@ class Mesh():
 
 class Engine3D():
     def __init__(self) -> None:
-        self.mesh = Mesh.load_from_file("cat.obj")
+#         self.mesh = Mesh.load_from_file("cat.obj")
         self.mesh = Mesh.load_from_file("t_34_obj.obj")
         # self.mesh = Mesh(
         #     [
@@ -88,6 +108,7 @@ class Engine3D():
         # TODO: Fix aspect ratio
         self.mProj = Matrix4x4.projection(80, 1, 0.1, 1000)
 
+    @timeit
     def update(self, r: Renderer, theta):
         # TODO: Add elapsed time
         # if r.is_key_pressed("up"):
@@ -173,7 +194,7 @@ class Engine3D():
         for t in triangles_to_raster:
             r.filled_triangle(t.p[0].x, t.p[0].y, t.p[1].x, t.p[1].y, t.p[2].x, t.p[2].y, color=t.col)
 
-    def _line_plane_intersection(self, plane_p: Vector3, plane_n: Vector3, line_start: Vector3, line_end: Vector3) -> tuple[Vector3, float]:
+    def _line_plane_intersection(self, plane_p: Vector3, plane_n: Vector3, line_start: Vector3, line_end: Vector3):
         """
         Returns the point of intersection between a plane and a line.
         """
@@ -186,7 +207,7 @@ class Engine3D():
         line_to_intersect = line_vec*t
         return line_start + line_to_intersect
 
-    def _clip_against_plane(self, plane_p: Vector3, plane_n: Vector3, triangle: Triangle) -> tuple[int, Triangle | None, Triangle | None]:
+    def _clip_against_plane(self, plane_p: Vector3, plane_n: Vector3, triangle: Triangle):
         """
         Clip the triangle against the plane and returns the number of valid triangles inside.
         Also returns one or two triangles that are guaranteed to be inside.

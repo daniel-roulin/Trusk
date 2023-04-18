@@ -6,13 +6,35 @@ import matplotlib.colors as mc
 import colorsys
 import cProfile
 
+
+from functools import wraps
+import time
+def timeit(func):
+    @wraps(func)
+    def timeit_wrapper(*args, **kwargs):
+        ts = np.empty(1)
+        for i in range(1):
+            start_time = time.perf_counter()
+            result = func(*args, **kwargs)
+            end_time = time.perf_counter()
+            total_time = end_time - start_time
+            ts[i] = total_time
+            print(f'{i + 1}: Function {func.__name__} took {total_time:.4f} seconds')
+        
+        average = np.average(ts)
+        print()
+        print(f'Function {func.__name__} took on average {average:.4f} seconds')
+        return result
+    return timeit_wrapper
+
+
 #TODO: default value 0,0,0 for Vector3
 
 
 #region classes
 #TODO: * operator overloading
 class Triangle():
-    def __init__(self, points: Iterable[Vector3] = [Vector3(0, 0, 0), Vector3(0, 0, 0), Vector3(0, 0, 0)]) -> None:
+    def __init__(self, points = [Vector3(0, 0, 0), Vector3(0, 0, 0), Vector3(0, 0, 0)]) -> None:
         self.p = np.array(points, dtype=Vector3)
         self.col = 0
 
@@ -49,7 +71,7 @@ class Mesh():
 
 
 #region functions
-def line_plane_intersection(plane_p: Vector3, plane_n: Vector3, line_start: Vector3, line_end: Vector3) -> tuple[Vector3, float]:
+def line_plane_intersection(plane_p: Vector3, plane_n: Vector3, line_start: Vector3, line_end: Vector3):
     """
     Returns the point of intersection between a plane and a line.
     """
@@ -63,7 +85,7 @@ def line_plane_intersection(plane_p: Vector3, plane_n: Vector3, line_start: Vect
     return line_start + line_to_intersect
 
 
-def clip_against_plane(plane_p: Vector3, plane_n: Vector3, triangle: Triangle) -> tuple[int, Triangle | None, Triangle | None]:
+def clip_against_plane(plane_p: Vector3, plane_n: Vector3, triangle: Triangle):
     """
     Clip the triangle against the plane and returns the number of valid triangles inside.
     Also returns one or two triangles that are guaranteed to be inside.
@@ -142,22 +164,22 @@ def adjust_lightness(color, amount=0.5):
 #endregion
 
 mesh = Mesh()
-# mesh.load_from_file("resources/t_34_obj.obj")
-mesh.triangles = [
-    Triangle([Vector3(0, 0, 0), Vector3(0, 1, 0), Vector3(1, 1, 0)]),
-    Triangle([Vector3(0, 0, 0), Vector3(1, 1, 0), Vector3(1, 0, 0)]),
-    Triangle([Vector3(1, 0, 0), Vector3(1, 1, 0), Vector3(1, 1, 1)]),
-    Triangle([Vector3(1, 0, 0), Vector3(1, 1, 1), Vector3(1, 0, 1)]),
-    Triangle([Vector3(1, 0, 1), Vector3(1, 1, 1), Vector3(0, 1, 1)]),
-    Triangle([Vector3(1, 0, 1), Vector3(0, 1, 1), Vector3(0, 0, 1)]),
-    Triangle([Vector3(0, 0, 1), Vector3(0, 1, 1), Vector3(0, 1, 0)]),
-    Triangle([Vector3(0, 0, 1), Vector3(0, 1, 0), Vector3(0, 0, 0)]),
-    Triangle([Vector3(0, 1, 0), Vector3(0, 1, 1), Vector3(1, 1, 1)]),
-    Triangle([Vector3(0, 1, 0), Vector3(1, 1, 1), Vector3(1, 1, 0)]),
-    Triangle([Vector3(1, 0, 1), Vector3(0, 0, 1), Vector3(0, 0, 0)]),
-    Triangle([Vector3(1, 0, 1), Vector3(0, 0, 0), Vector3(1, 0, 0)])
-]
-
+mesh.load_from_file("resources/t_34_obj.obj")
+# mesh.triangles = [
+#     Triangle([Vector3(0, 0, 0), Vector3(0, 1, 0), Vector3(1, 1, 0)]),
+#     Triangle([Vector3(0, 0, 0), Vector3(1, 1, 0), Vector3(1, 0, 0)]),
+#     Triangle([Vector3(1, 0, 0), Vector3(1, 1, 0), Vector3(1, 1, 1)]),
+#     Triangle([Vector3(1, 0, 0), Vector3(1, 1, 1), Vector3(1, 0, 1)]),
+#     Triangle([Vector3(1, 0, 1), Vector3(1, 1, 1), Vector3(0, 1, 1)]),
+#     Triangle([Vector3(1, 0, 1), Vector3(0, 1, 1), Vector3(0, 0, 1)]),
+#     Triangle([Vector3(0, 0, 1), Vector3(0, 1, 1), Vector3(0, 1, 0)]),
+#     Triangle([Vector3(0, 0, 1), Vector3(0, 1, 0), Vector3(0, 0, 0)]),
+#     Triangle([Vector3(0, 1, 0), Vector3(0, 1, 1), Vector3(1, 1, 1)]),
+#     Triangle([Vector3(0, 1, 0), Vector3(1, 1, 1), Vector3(1, 1, 0)]),
+#     Triangle([Vector3(1, 0, 1), Vector3(0, 0, 1), Vector3(0, 0, 0)]),
+#     Triangle([Vector3(1, 0, 1), Vector3(0, 0, 0), Vector3(1, 0, 0)])
+# ]
+# 
 vCamera = Vector3(0, 0, 0)
 
 fTheta = 0
@@ -166,7 +188,7 @@ fTheta = 0
 matProj = Matrix4x4.projection(80, 1, 0.1, 1000)
 
 
-# @timing
+# @timeit
 def update(r, theta):
     matRotZ = Matrix4x4.rotationZ(theta)
 

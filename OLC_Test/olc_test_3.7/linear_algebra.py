@@ -52,7 +52,7 @@ class Vector3():
         return result
 
     def __mul__(a, b: float | Matrix4x4) -> Vector3:
-        if isinstance(b, float | int):
+        if isinstance(b, float):
             result = Vector3()
             result.vector[0:3] = a.vector[0:3]*b
             return result
