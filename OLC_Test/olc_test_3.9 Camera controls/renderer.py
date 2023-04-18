@@ -76,7 +76,7 @@ class Renderer:
 
     def draw(self):
         """Renders the scene."""
-        plt.pause(0)
+        plt.pause(0.000000000000000000000000000000000000000000000001)
         # plt.pause(self.FRAME_TIME)
         self.axes.cla()
         self._set_axis()
