@@ -1,1 +1,0 @@
-olc_test_3.8 - cat.obj - Numpy optimization - Function update took on average 0.2126 seconds
