@@ -21,13 +21,18 @@ class Renderer:
         self._setup_inputs()
 
     def _set_axis(self):
+        """Sets the axis parameters
+        """
         self.axes.set_xlim(-200, self.WIDTH)
         self.axes.set_ylim(-200, self.HEIGHT)
-        self.axes.set_axis_off()
+        self.axes.set_title("Stacker")
+        # self.axes.set_axis_off()
         self.axes.set_aspect("equal", "box")
 
     def _setup_inputs(self):
-        self._keys_pressed = []
+        """Prepare the inputs
+        """
+        # self._keys_pressed = []
         self._buttons_pressed = []
         self.mouse_x = 0
         self.mouse_y = 0
@@ -37,20 +42,23 @@ class Renderer:
         self.mouse_delta_y = self.mouse_y - self.prev_mouse_y
         for param in plt.rcParams.find_all("keymap"):
             plt.rcParams[param] = []
-        plt.connect('key_press_event', self._key_pressed)
-        plt.connect('key_release_event', self._key_released)
+        # plt.connect('key_press_event', self._key_pressed)
+        # plt.connect('key_release_event', self._key_released)
         plt.connect('motion_notify_event', self._mouse_moved)
         plt.connect('close_event', self.quit)
         plt.connect('button_press_event', self._button_pressed)
         plt.connect('button_release_event', self._button_released)
 
-    def _key_pressed(self, event):
-        self._keys_pressed.append(event.key)
+    # def _key_pressed(self, event):
+    #     self._keys_pressed.append(event.key)
 
-    def _key_released(self, event):
-        self._keys_pressed.remove(event.key)
+    # def _key_released(self, event):
+    #     self._keys_pressed.remove(event.key)
 
     def _mouse_moved(self, event):
+        """Called when the mouse has moved in the matplotlib window.
+        """
+        # We check that the mouse is in our figure
         if event.inaxes:
             self.mouse_x = event.xdata
             self.mouse_y = event.ydata
@@ -60,18 +68,24 @@ class Renderer:
             self.prev_mouse_y = self.mouse_y
 
     def _button_pressed(self, event):
+        """Called when a button of the mouse is pressed
+        """
         self._buttons_pressed.append(event.button.value)
 
     def _button_released(self, event):
+        """Called when a button of the mouse is released
+        """
         self._buttons_pressed.remove(event.button.value)
 
     def quit(self, event):
+        """We hook up the quit event of matplotlib to exit our programm, so closing the window stops the script"""
         exit()
 
-    def is_key_pressed(self, key):
-        return key in self._keys_pressed
+    # def is_key_pressed(self, key):
+    #     return key in self._keys_pressed
 
     def is_button_pressed(self, button):
+        """Returns wether or not a button of the mouse is pressed"""
         return button in self._buttons_pressed
 
     def draw(self):

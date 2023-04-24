@@ -3,7 +3,10 @@ import numpy as np
 import matplotlib.colors as mc
 import colorsys
 from matrix import Matrix4x4
-from pprint import pprint
+
+
+def lerp(a, b, t):
+    return a*(1-t) + b*t
 
 
 class Entity():
@@ -17,10 +20,16 @@ class Entity():
         self.mesh = np.array(mesh, dtype=float)
         self.position = position
         self.color = color
+        self.target_position = position
         # Should calculate normals here
 
     def translation_matrix(self):
         return Matrix4x4.translation(self.position[0], self.position[1], self.position[2])
+
+    def animate(self, speed):
+        self.position[0] = lerp(self.position[0], self.target_position[0], speed)
+        self.position[1] = lerp(self.position[1], self.target_position[1], speed)
+        self.position[2] = lerp(self.position[2], self.target_position[2], speed)
 
 
 class Camera():

@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.colors as mc
 import colorsys
 from matrix import Matrix4x4
-from pprint import pprint
 
 
 class Entity():
@@ -15,9 +14,8 @@ class Entity():
                     point.append(1)
 
         self.mesh = np.array(mesh, dtype=float)
-        self.position = position
+        self.position = np.array(position)
         self.color = color
-        # Should calculate normals here
 
     def translation_matrix(self):
         return Matrix4x4.translation(self.position[0], self.position[1], self.position[2])
@@ -137,9 +135,6 @@ class Engine3D():
             projected_triangles[:, 1] /= projected_triangles[:, 1][:, np.newaxis, -1]
             projected_triangles[:, 2] /= projected_triangles[:, 2][:, np.newaxis, -1]
             projected_triangles[:, :, :2] *= np.array([renderer.WIDTH/2, renderer.HEIGHT/2])[np.newaxis, :]
-
-            if not self.camera.orthographic_projection:
-                projected_triangles[:, :, :2] *= np.array([-1, -1])[np.newaxis, :]
 
             for i in range(projected_triangles.shape[0]):
                 t = projected_triangles[i]
